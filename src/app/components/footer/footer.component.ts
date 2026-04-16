@@ -7,8 +7,9 @@ import { Component } from '@angular/core';
     <footer class="site-footer">
       <div class="container footer-grid">
         <div>
-          <h4>STAR-BTP</h4>
-          <p>La qualité au meilleur prix. Entreprise BTP au Sénégal.</p>
+          <img src="img/logo-star-btp-clair.svg" alt="STAR-BTP" class="footer-logo" />
+          <p>Entreprise BTP basée à Rufisque (Sénégal). Études, construction et rénovation.</p>
+          <p><small>RC : SN.DKR.2020.A.281<br/>NINEA : 007726451</small></p>
         </div>
         <div>
           <h4>Services</h4>
@@ -30,7 +31,7 @@ import { Component } from '@angular/core';
         </div>
         <div>
           <h4>Contact</h4>
-          <p>Dakar, Sénégal<br/>+221 XX XXX XX XX<br/>contact&#64;starbtp.sn</p>
+          <p>Cité ASECNA, Rufisque<br/>+221 77 228 96 69 / 77 409 67 17<br/>startbtp1503&#64;gmail.com</p>
         </div>
       </div>
       <div class="footer-bottom">

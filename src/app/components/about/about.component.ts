@@ -9,8 +9,9 @@ import { Component } from '@angular/core';
         <div>
           <span class="eyebrow">À propos de nous</span>
           <h2>Qui sommes-nous ?</h2>
-          <p>STAR-BTP est une entreprise sénégalaise spécialisée dans le bâtiment et les travaux publics. Nous accompagnons particuliers, entreprises et collectivités dans la réalisation de leurs projets, du gros œuvre aux finitions.</p>
-          <p>Notre engagement : livrer des ouvrages de qualité, dans les délais et au meilleur prix, grâce à une équipe expérimentée et des méthodes rigoureuses.</p>
+          <p>STAR-BTP est une entreprise sénégalaise créée en 2020 (RC : SN.DKR.2020.A.281 — NINEA : 007726451), spécialisée dans la construction et la rénovation : gros œuvre, second œuvre, lot technique, assainissement, terrassement et AEP. Nous intégrons à chaque projet les obligations d'accessibilité PMR et de sécurité des travailleurs.</p>
+          <p>Nos missions couvrent l'ingénierie des travaux, des études jusqu'à la réalisation des ouvrages. L'entreprise s'appuie sur des ingénieurs génie civil, ingénieurs géomètres-topographes, techniciens supérieurs et chefs de chantier qualifiés totalisant plusieurs années d'expérience terrain.</p>
+          <p><strong>Direction</strong> — Mamadou BA (Directeur Général), Abdoulaye KA (Directeur Technique), Awa NDOUR (Gestionnaire-comptable).</p>
           <ul class="check-list">
             @for (item of highlights; track item) {
               <li>{{ item }}</li>
@@ -28,15 +29,16 @@ import { Component } from '@angular/core';
 })
 export class AboutComponent {
   highlights = [
-    'Équipe qualifiée et expérimentée',
-    'Respect des délais et du budget',
-    'Matériaux de qualité certifiée',
-    'Suivi personnalisé de chaque projet',
+    'Ingénieurs génie civil et géomètres-topographes',
+    'Études techniques structurelles et architecturales',
+    'Suivi et organisation de chantier rigoureux',
+    'Accessibilité PMR et sécurité des travailleurs',
+    'Location de machines et matériel de chantier',
   ];
   stats = [
-    { value: '50+', label: 'Projets livrés' },
-    { value: '15+', label: "Années d'expérience" },
-    { value: '100%', label: 'Clients satisfaits' },
-    { value: '24/7', label: 'Support client' },
+    { value: '20+', label: 'Projets réalisés' },
+    { value: '10', label: "Cadres d'encadrement" },
+    { value: '2020', label: 'Année de création' },
+    { value: '6', label: 'Domaines d\'expertise' },
   ];
 }

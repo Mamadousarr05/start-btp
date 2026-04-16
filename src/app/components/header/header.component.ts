@@ -7,7 +7,7 @@ import { Component, signal } from '@angular/core';
     <header class="site-header">
       <div class="container header-inner">
         <a href="#accueil" class="logo">
-          <img src="img/logo.png" alt="STAR-BTP" />
+          <img src="img/logo-star-btp-sombre.svg" alt="STAR-BTP" />
           <span>STAR-BTP</span>
         </a>
         <nav class="main-nav">
