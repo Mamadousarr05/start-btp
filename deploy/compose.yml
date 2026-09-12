@@ -1,0 +1,28 @@
+name: star-btp
+
+services:
+  # Reverse proxy : HTTPS automatique (Let's Encrypt) + renouvellement
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      # Dossier (et non fichier) monté pour que les mises à jour du Caddyfile soient visibles
+      - ./caddy:/etc/caddy:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+  # Site Angular servi par nginx, accessible uniquement via Caddy
+  app:
+    image: ${IMAGE:?IMAGE non défini}
+    restart: unless-stopped
+
+volumes:
+  # Certificats SSL : doivent survivre aux redéploiements
+  caddy_data:
+  caddy_config:

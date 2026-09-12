@@ -3,6 +3,7 @@ dist
 .angular
 .git
 .github
+deploy
 .vscode
 Dockerfile
 .dockerignore

@@ -12,8 +12,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  CONTAINER_NAME: star-btp
-  APP_PORT: 80
+  DEPLOY_DIR: /opt/star-btp
 
 jobs:
   build:
@@ -59,24 +58,41 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # deploy/compose.yml -> /opt/star-btp/compose.yml, deploy/caddy/ -> /opt/star-btp/caddy/
+      - name: Copie de la config (Compose + Caddy)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          source: deploy/compose.yml,deploy/caddy/Caddyfile
+          target: ${{ env.DEPLOY_DIR }}
+          strip_components: 1
+          overwrite: true
+
       - name: Déploiement via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
           IMAGE: ${{ needs.build.outputs.image }}:${{ github.sha }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
-          APP_PORT: ${{ env.APP_PORT }}
+          DEPLOY_DIR: ${{ env.DEPLOY_DIR }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
-          envs: IMAGE,GHCR_USER,GHCR_TOKEN,CONTAINER_NAME,APP_PORT
+          envs: IMAGE,GHCR_USER,GHCR_TOKEN,DEPLOY_DIR
           script: |
             set -eu
+            cd "$DEPLOY_DIR"
 
             # 1. Installer Docker s'il est absent
             if ! command -v docker >/dev/null 2>&1; then
@@ -89,24 +105,30 @@ jobs:
               systemctl enable --now docker
             fi
             docker --version
+            docker compose version
 
-            # 2. Récupérer la nouvelle image depuis GHCR
+            # 2. Image précédente (pour rollback)
+            PREV_IMAGE=$(sed -n 's/^IMAGE=//p' .env 2>/dev/null || true)
+
+            # Migration : ancien conteneur lancé avec "docker run" qui occupe le port 80
+            if docker inspect star-btp >/dev/null 2>&1; then
+              PREV_IMAGE=${PREV_IMAGE:-$(docker inspect -f '{{.Config.Image}}' star-btp)}
+              docker rm -f star-btp >/dev/null
+            fi
+
+            # 3. Récupérer la nouvelle image depuis GHCR
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            docker pull "$IMAGE"
+            IMAGE="$IMAGE" docker compose pull app
             docker logout ghcr.io
 
-            # 3. Remplacer le conteneur en gardant l'image précédente pour rollback
-            PREV_IMAGE=$(docker inspect -f '{{.Config.Image}}' "$CONTAINER_NAME" 2>/dev/null || true)
-            docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
-
             start() {
-              docker run -d --name "$CONTAINER_NAME" --restart unless-stopped \
-                -p "$APP_PORT:80" "$1"
+              echo "IMAGE=$1" > .env
+              docker compose up -d --remove-orphans
             }
 
             healthy() {
               for i in $(seq 1 15); do
-                if docker exec "$CONTAINER_NAME" wget -qO /dev/null http://127.0.0.1/ 2>/dev/null; then
+                if docker compose exec -T app wget -qO /dev/null http://127.0.0.1/ 2>/dev/null; then
                   return 0
                 fi
                 sleep 2
@@ -114,12 +136,12 @@ jobs:
               return 1
             }
 
+            # 4. Démarrer (Caddy + app) avec rollback si l'app ne répond pas
             if start "$IMAGE" && healthy; then
               echo ">> Déploiement OK : $IMAGE"
             else
               echo ">> Échec du déploiement de $IMAGE"
-              docker logs "$CONTAINER_NAME" 2>&1 | tail -n 50 || true
-              docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+              docker compose logs --tail 50 app 2>&1 || true
               if [ -n "$PREV_IMAGE" ]; then
                 echo ">> Rollback vers $PREV_IMAGE"
                 start "$PREV_IMAGE"
@@ -127,7 +149,10 @@ jobs:
               exit 1
             fi
 
-            # 4. Nettoyage : ne garder que l'image courante et la précédente
+            # 5. Recharger Caddy si le Caddyfile a changé (sans coupure ni perte des certificats)
+            docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+
+            # 6. Nettoyage : ne garder que l'image courante et la précédente
             REPO="${IMAGE%:*}"
             docker image ls "$REPO" --format '{{.Repository}}:{{.Tag}}' \
               | grep -vxF -e "$IMAGE" -e "${PREV_IMAGE:-none}" \
