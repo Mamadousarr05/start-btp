@@ -23,7 +23,7 @@ export const COMPANY = {
   bank: 'SN 251209258001',
   address: 'Cité ASECNA, Immeuble en face Clinique NABY, 1er Étage — Rufisque, Dakar',
   phones: ['+221 77 228 96 69', '+221 77 409 67 17'],
-  email: 'startbtp1503@gmail.com',
+  email: 'contact@star-btp.com',
   hours: 'Lundi – Samedi, 8h – 18h',
 };
 

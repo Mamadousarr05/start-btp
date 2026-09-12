@@ -4,6 +4,7 @@ dist
 .git
 .github
 deploy
+emailjs
 .vscode
 Dockerfile
 .dockerignore

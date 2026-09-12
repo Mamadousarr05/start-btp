@@ -180,9 +180,14 @@ export class ContactPage {
           reply_to: v.email ?? '',
           name: v.name ?? '',
           email: v.email ?? '',
-          phone: v.phone ?? '',
-          service: v.service ?? '',
+          phone: v.phone || 'Non renseigné',
+          service: v.service || 'Non précisé',
           message: v.message ?? '',
+          sent_at: new Date().toLocaleString('fr-FR', {
+            dateStyle: 'full',
+            timeStyle: 'short',
+            timeZone: 'Africa/Dakar',
+          }),
         },
         { publicKey: this.EMAILJS_PUBLIC_KEY },
       );

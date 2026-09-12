@@ -130,18 +130,24 @@ reste jamais bloqué.
 
 #### ⚠️ Configuration EmailJS requise
 
-Le template doit router le mail vers l'adresse de l'entreprise. Sur
-[dashboard.emailjs.com](https://dashboard.emailjs.com) → **Email Templates** → **Settings** :
+Les demandes arrivent sur **contact@star-btp.com** (`COMPANY.email`). Le template doit router le
+mail vers cette adresse. Sur [dashboard.emailjs.com](https://dashboard.emailjs.com) →
+**Email Templates** → template `template_7rhv1on` → **Settings** :
 
 - **To Email** : `{{to_email}}`
 - **Reply To** : `{{reply_to}}`
+- **Subject** : `Nouvelle demande de devis — {{service}} — {{name}}`
 
 Sans cela, l'adresse destinataire reste celle codée en dur dans le template et **aucune demande
 n'est délivrée**. Les identifiants (`SERVICE_ID`, `TEMPLATE_ID`, `PUBLIC_KEY`) sont en haut de la
 classe `ContactPage`.
 
+**Mise en page du mail** : copier le contenu de
+[`emailjs/template-devis.html`](emailjs/template-devis.html) dans **Content** → **Edit Content** →
+**Code Editor**. Le logo est servi par le site (`public/img/email/logo-star-btp.png`).
+
 Variables transmises au template : `to_email`, `reply_to`, `name`, `email`, `phone`, `service`,
-`message`.
+`message`, `sent_at`.
 
 ### Étape 8 — Référencement
 
