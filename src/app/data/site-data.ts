@@ -237,17 +237,21 @@ export const TESTIMONIALS = [
   },
 ];
 
-export const PARTNERS = [
-  'ATRA SA',
-  'Ceratech Construction',
-  'DANGOTE Cement',
-  'ASECNA',
-  'SENICO',
-  'CFPT Sénégal/Japon',
-  'APIX',
-  'Ville de Rufisque',
-  'SENELEC',
-  'SDE',
+export interface Partner {
+  /** Nom affiché, et texte de repli quand aucun logo n'est disponible. */
+  name: string;
+  /** Logo officiel dans public/img/partners/. Omettre pour afficher le nom en toutes lettres. */
+  logo?: string;
+}
+
+export const PARTNERS: Partner[] = [
+  { name: 'Ceratech Construction', logo: 'img/partners/ceratech.svg' },
+  { name: 'DANGOTE Cement', logo: 'img/partners/dangote.png' },
+  { name: 'ASECNA', logo: 'img/partners/asecna.png' },
+  { name: 'SENICO', logo: 'img/partners/senico.png' },
+  { name: 'CFPT Sénégal/Japon', logo: 'img/partners/cfpt.png' },
+  { name: 'APIX', logo: 'img/partners/apix.svg' },
+  { name: 'ATRA SA' },
 ];
 
 export const JOBS = [

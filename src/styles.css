@@ -491,18 +491,35 @@ p { color: hsl(var(--muted-foreground)); }
 .logo-tile {
   display: grid;
   place-items: center;
-  min-height: 6rem;
-  padding: 1rem;
+  min-height: 7rem;
+  padding: 1.25rem;
   text-align: center;
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius);
-  background: hsl(var(--card));
+  background-color: hsl(var(--card));
   font-weight: 700;
   font-size: .9rem;
   color: hsl(var(--muted-foreground));
   transition: var(--transition-smooth);
 }
 .logo-tile:hover { color: hsl(var(--primary)); border-color: hsl(var(--primary) / .4); box-shadow: var(--shadow-sm); transform: translateY(-3px); }
+
+/* Cadre portant le logo officiel en arrière-plan : contenu dans le cadre, jamais déformé. */
+.logo-tile--img {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  /* La zone peinte est réduite par le padding, ce qui aère le logo dans son cadre. */
+  background-origin: content-box;
+  filter: grayscale(1);
+  opacity: .72;
+}
+.logo-tile--img:hover { filter: none; opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-tile, .logo-tile--img { transition: none; }
+  .logo-tile:hover { transform: none; }
+}
 
 /* ---------- Offres d'emploi ---------- */
 .job {

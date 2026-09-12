@@ -183,7 +183,15 @@ import { PARTNERS, PROJECTS, SERVICES, STATS, TESTIMONIALS } from '../../data/si
           <h2>Ils nous font confiance pour leurs projets</h2>
         </div>
         <div class="logo-grid">
-          @for (p of partners; track p) { <div class="logo-tile">{{ p }}</div> }
+          @for (p of partners; track p.name) {
+            @if (p.logo) {
+              <div class="logo-tile logo-tile--img" [style.background-image]="'url(' + p.logo + ')'" [title]="p.name">
+                <span class="sr-only">{{ p.name }}</span>
+              </div>
+            } @else {
+              <div class="logo-tile">{{ p.name }}</div>
+            }
+          }
         </div>
         <div class="center mt-2">
           <a routerLink="/partenaires" class="btn btn-outline">Tous nos partenaires</a>

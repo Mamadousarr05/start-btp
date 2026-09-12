@@ -31,7 +31,15 @@ import { PARTNERS, TESTIMONIALS } from '../../data/site-data';
           <p>Entreprises, institutions et collectivités qui nous ont confié leurs projets.</p>
         </div>
         <div class="logo-grid">
-          @for (p of partners; track p) { <div class="logo-tile">{{ p }}</div> }
+          @for (p of partners; track p.name) {
+            @if (p.logo) {
+              <div class="logo-tile logo-tile--img" [style.background-image]="'url(' + p.logo + ')'" [title]="p.name">
+                <span class="sr-only">{{ p.name }}</span>
+              </div>
+            } @else {
+              <div class="logo-tile">{{ p.name }}</div>
+            }
+          }
         </div>
       </div>
     </section>
