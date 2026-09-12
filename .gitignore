@@ -40,3 +40,8 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Secrets (variables d'environnement) et Python
+.env
+*.env
+__pycache__/

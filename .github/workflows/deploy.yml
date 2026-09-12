@@ -16,7 +16,7 @@ env:
 
 jobs:
   build:
-    name: Build & push image (GHCR)
+    name: Build & push images (GHCR)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       # GHCR exige un nom d'image en minuscules
-      - name: Nom de l'image
+      - name: Nom des images
         id: image
         run: echo "name=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
@@ -42,7 +42,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push
+      - name: Build & push site
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -50,8 +50,19 @@ jobs:
           tags: |
             ${{ steps.image.outputs.name }}:latest
             ${{ steps.image.outputs.name }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=site
+          cache-to: type=gha,mode=max,scope=site
+
+      - name: Build & push API mails
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}-api:latest
+            ${{ steps.image.outputs.name }}-api:${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
 
   deploy:
     name: Deploy sur le VPS
@@ -81,15 +92,21 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           IMAGE: ${{ needs.build.outputs.image }}:${{ github.sha }}
+          API_IMAGE: ${{ needs.build.outputs.image }}-api:${{ github.sha }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOY_DIR: ${{ env.DEPLOY_DIR }}
+          SMTP_HOST: greek.o2switch.net
+          SMTP_PORT: "465"
+          SMTP_USER: contact@star-btp.com
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_TO: contact@star-btp.com
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
-          envs: IMAGE,GHCR_USER,GHCR_TOKEN,DEPLOY_DIR
+          envs: IMAGE,API_IMAGE,GHCR_USER,GHCR_TOKEN,DEPLOY_DIR,SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASSWORD,MAIL_TO
           script: |
             set -eu
             cd "$DEPLOY_DIR"
@@ -107,28 +124,40 @@ jobs:
             docker --version
             docker compose version
 
-            # 2. Image précédente (pour rollback)
+            # 2. Variables de l'API mails (api.env lisible par root uniquement)
+            umask 077
+            cat > api.env <<EOF
+            SMTP_HOST=$SMTP_HOST
+            SMTP_PORT=$SMTP_PORT
+            SMTP_SECURITY=ssl
+            SMTP_USER=$SMTP_USER
+            SMTP_PASSWORD='$SMTP_PASSWORD'
+            MAIL_FROM=$SMTP_USER
+            MAIL_FROM_NAME=Site STAR-BTP
+            MAIL_TO=$MAIL_TO
+            RATE_LIMIT_PER_HOUR=5
+            EOF
+            umask 022
+
+            # 3. Images en service (pour rollback)
             PREV_IMAGE=$(sed -n 's/^IMAGE=//p' .env 2>/dev/null || true)
+            PREV_API_IMAGE=$(sed -n 's/^API_IMAGE=//p' .env 2>/dev/null || true)
 
-            # Migration : ancien conteneur lancé avec "docker run" qui occupe le port 80
-            if docker inspect star-btp >/dev/null 2>&1; then
-              PREV_IMAGE=${PREV_IMAGE:-$(docker inspect -f '{{.Config.Image}}' star-btp)}
-              docker rm -f star-btp >/dev/null
-            fi
-
-            # 3. Récupérer la nouvelle image depuis GHCR
+            # 4. Récupérer les nouvelles images depuis GHCR
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            IMAGE="$IMAGE" docker compose pull app
+            docker pull "$IMAGE"
+            docker pull "$API_IMAGE"
             docker logout ghcr.io
 
             start() {
-              echo "IMAGE=$1" > .env
+              printf 'IMAGE=%s\nAPI_IMAGE=%s\n' "$1" "$2" > .env
               docker compose up -d --remove-orphans
             }
 
             healthy() {
               for i in $(seq 1 15); do
-                if docker compose exec -T app wget -qO /dev/null http://127.0.0.1/ 2>/dev/null; then
+                if docker compose exec -T app wget -qO /dev/null http://127.0.0.1/ 2>/dev/null \
+                  && docker compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2)" 2>/dev/null; then
                   return 0
                 fi
                 sleep 2
@@ -136,24 +165,25 @@ jobs:
               return 1
             }
 
-            # 4. Démarrer (Caddy + app) avec rollback si l'app ne répond pas
-            if start "$IMAGE" && healthy; then
-              echo ">> Déploiement OK : $IMAGE"
+            # 5. Démarrer (Caddy + site + API) avec rollback si un service ne répond pas
+            if start "$IMAGE" "$API_IMAGE" && healthy; then
+              echo ">> Déploiement OK : $IMAGE + $API_IMAGE"
             else
-              echo ">> Échec du déploiement de $IMAGE"
-              docker compose logs --tail 50 app 2>&1 || true
+              echo ">> Échec du déploiement"
+              docker compose logs --tail 50 app api 2>&1 || true
               if [ -n "$PREV_IMAGE" ]; then
                 echo ">> Rollback vers $PREV_IMAGE"
-                start "$PREV_IMAGE"
+                start "$PREV_IMAGE" "${PREV_API_IMAGE:-$API_IMAGE}"
               fi
               exit 1
             fi
 
-            # 5. Recharger Caddy si le Caddyfile a changé (sans coupure ni perte des certificats)
+            # 6. Recharger Caddy si le Caddyfile a changé (sans coupure ni perte des certificats)
             docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 
-            # 6. Nettoyage : ne garder que l'image courante et la précédente
-            REPO="${IMAGE%:*}"
-            docker image ls "$REPO" --format '{{.Repository}}:{{.Tag}}' \
-              | grep -vxF -e "$IMAGE" -e "${PREV_IMAGE:-none}" \
-              | xargs -r docker rmi >/dev/null 2>&1 || true
+            # 7. Nettoyage : ne garder que les images courantes et précédentes
+            for NEW in "$IMAGE" "$API_IMAGE"; do
+              docker image ls "${NEW%:*}" --format '{{.Repository}}:{{.Tag}}' \
+                | grep -vxF -e "$NEW" -e "${PREV_IMAGE:-none}" -e "${PREV_API_IMAGE:-none}" \
+                | xargs -r docker rmi >/dev/null 2>&1 || true
+            done

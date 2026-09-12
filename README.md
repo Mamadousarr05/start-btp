@@ -111,43 +111,52 @@ filtered = computed(() =>
 );
 ```
 
-### Étape 7 — Formulaire de devis (EmailJS)
+### Étape 7 — Formulaire de devis (API Python)
 
-Le formulaire de [`/contact`](src/app/pages/contact/contact.page.ts) envoie les demandes via
-**EmailJS**, sans backend. Il gère l'état d'envoi, la validation et surtout **le diagnostic des
-erreurs** : la méthode `describeError()` lit le `status` HTTP et le texte renvoyés par EmailJS
-pour afficher une cause réelle plutôt qu'un message générique.
+Le formulaire de [`/contact`](src/app/pages/contact/contact.page.ts) envoie les demandes à
+`POST /api/contact`, une petite API Python ([`api/main.py`](api/main.py), FastAPI) qui tourne dans
+son propre conteneur sur le VPS. Elle transmet le mail à **contact@star-btp.com** via le SMTP
+o2switch (`greek.o2switch.net:465`, SSL).
 
-| Code | Signification affichée |
+Le mail est en HTML aux couleurs STAR-BTP, avec le visuel du site intégré au mail (aucune image à
+télécharger) et une version texte : [`api/templates/`](api/templates/). Le client est placé en
+« Répondre à » : répondre au mail écrit directement au client.
+
+| Protection | Détail |
 |---|---|
-| `412` | Serveur de messagerie : boîte destinataire saturée ou rejet SMTP |
-| `400` / `404` | Service ou template EmailJS introuvable |
-| `403` | Domaine non autorisé dans les réglages EmailJS |
+| Destinataire fixe | `MAIL_TO` côté serveur, jamais fourni par le navigateur |
+| Limite de débit | 5 demandes par heure et par IP (`RATE_LIMIT_PER_HOUR`) |
+| Piège anti-robots | Champ caché `website` : s'il est rempli, la demande est ignorée |
+| Validation | Longueurs et format de l'email ; retours à la ligne retirés des en-têtes |
+| Échappement | Tout le contenu saisi par le visiteur est échappé dans le HTML |
+| Taille | Corps de requête limité à 64 Ko par Caddy |
+
+| Code | Message affiché au visiteur |
+|---|---|
+| `422` | Champs invalides (email, message) |
 | `429` | Trop de demandes en peu de temps |
+| `502` | Échec de l'envoi SMTP |
 
 En cas d'échec, un lien `mailto:` de repli s'affiche sous le message pour que le visiteur ne
 reste jamais bloqué.
 
-#### ⚠️ Configuration EmailJS requise
+#### Variables d'environnement de l'API
 
-Les demandes arrivent sur **contact@star-btp.com** (`COMPANY.email`). Le template doit router le
-mail vers cette adresse. Sur [dashboard.emailjs.com](https://dashboard.emailjs.com) →
-**Email Templates** → template `template_7rhv1on` → **Settings** :
+En production, le workflow génère `/opt/star-btp/api.env` (lisible par root uniquement) ; le mot
+de passe vient du secret GitHub `SMTP_PASSWORD`.
 
-- **To Email** : `{{to_email}}`
-- **Reply To** : `{{reply_to}}`
-- **Subject** : `Nouvelle demande de devis — {{service}} — {{name}}`
+| Variable | Valeur en production |
+|---|---|
+| `SMTP_HOST` / `SMTP_PORT` | `greek.o2switch.net` / `465` |
+| `SMTP_SECURITY` | `ssl` (`starttls` pour le port 587, `none` pour un serveur de test) |
+| `SMTP_USER` / `SMTP_PASSWORD` | `contact@star-btp.com` / secret GitHub |
+| `MAIL_FROM` / `MAIL_TO` | `contact@star-btp.com` |
+| `MAIL_FROM_NAME` | `Site STAR-BTP` |
+| `RATE_LIMIT_PER_HOUR` | `5` |
 
-Sans cela, l'adresse destinataire reste celle codée en dur dans le template et **aucune demande
-n'est délivrée**. Les identifiants (`SERVICE_ID`, `TEMPLATE_ID`, `PUBLIC_KEY`) sont en haut de la
-classe `ContactPage`.
-
-**Mise en page du mail** : copier le contenu de
-[`emailjs/template-devis.html`](emailjs/template-devis.html) dans **Content** → **Edit Content** →
-**Code Editor**. Le logo est servi par le site (`public/img/email/logo-star-btp.png`).
-
-Variables transmises au template : `to_email`, `reply_to`, `name`, `email`, `phone`, `service`,
-`message`, `sent_at`.
+En local, `npm start` redirige `/api` vers `http://localhost:8000`
+([`proxy.conf.json`](proxy.conf.json)). Lancer l'API avec ces variables dans `api/.env` :
+`docker build -t star-btp-api api && docker run --env-file api/.env -p 8000:8000 star-btp-api`.
 
 ### Étape 8 — Référencement
 
@@ -208,4 +217,5 @@ Le site statique est produit dans **`dist/starbtp-ng/browser/`**.
 | Modifier coordonnées, horaires, mentions légales | `site-data.ts` → `COMPANY` |
 | Ajouter une entrée de menu | `site-data.ts` → `NAV_ITEMS` **et** `app.routes.ts` |
 | Changer les couleurs ou la typographie | `src/styles.css` (bloc `:root`) |
-| Changer le destinataire des devis | `site-data.ts` → `COMPANY.email` + template EmailJS |
+| Changer le destinataire des devis | `MAIL_TO` dans `.github/workflows/deploy.yml` + `site-data.ts` → `COMPANY.email` |
+| Modifier le mail reçu | `api/templates/devis.html` (HTML) et `api/templates/devis.txt` (texte) |

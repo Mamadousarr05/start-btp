@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import emailjs from '@emailjs/browser';
 import { COMPANY, SERVICES } from '../../data/site-data';
 
 @Component({
@@ -74,17 +73,17 @@ import { COMPANY, SERVICES } from '../../data/site-data';
           <div class="field-row">
             <div class="field">
               <label for="name">Nom complet *</label>
-              <input id="name" type="text" name="name" ngModel required autocomplete="name" />
+              <input id="name" type="text" name="name" ngModel required minlength="2" maxlength="100" autocomplete="name" />
             </div>
             <div class="field">
               <label for="email">Email *</label>
-              <input id="email" type="email" name="email" ngModel required autocomplete="email" />
+              <input id="email" type="email" name="email" ngModel required email maxlength="254" autocomplete="email" />
             </div>
           </div>
           <div class="field-row">
             <div class="field">
               <label for="phone">Téléphone</label>
-              <input id="phone" type="tel" name="phone" ngModel autocomplete="tel" />
+              <input id="phone" type="tel" name="phone" ngModel maxlength="30" autocomplete="tel" />
             </div>
             <div class="field">
               <label for="service">Service souhaité</label>
@@ -95,7 +94,12 @@ import { COMPANY, SERVICES } from '../../data/site-data';
           </div>
           <div class="field">
             <label for="message">Votre message *</label>
-            <textarea id="message" rows="6" name="message" ngModel required></textarea>
+            <textarea id="message" rows="6" name="message" ngModel required minlength="5" maxlength="5000"></textarea>
+          </div>
+          <!-- Piège anti-robots : invisible pour les visiteurs, rempli seulement par les robots -->
+          <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden">
+            <label for="website">Site web</label>
+            <input id="website" type="text" name="website" ngModel tabindex="-1" autocomplete="off" />
           </div>
           <button type="submit" class="btn btn-accent btn-lg" [disabled]="sending" style="width:100%">
             {{ sending ? 'Envoi en cours…' : 'Envoyer le message' }}
@@ -155,11 +159,6 @@ export class ContactPage {
     },
   ];
 
-  // EmailJS — valeurs issues de https://dashboard.emailjs.com
-  private readonly EMAILJS_SERVICE_ID = 'service_d8j4lui';
-  private readonly EMAILJS_TEMPLATE_ID = 'template_7rhv1on';
-  private readonly EMAILJS_PUBLIC_KEY = 'iqfHuu3wr9z6J4tPU';
-
   fallbackMailto = `mailto:${COMPANY.email}?subject=` + encodeURIComponent('Demande de devis — STAR-BTP');
 
   sending = false;
@@ -171,26 +170,20 @@ export class ContactPage {
     this.sending = true;
     this.status = null;
     try {
-      await emailjs.send(
-        this.EMAILJS_SERVICE_ID,
-        this.EMAILJS_TEMPLATE_ID,
-        {
-          // Nécessite que le champ « To Email » du template EmailJS vaille {{to_email}}
-          to_email: COMPANY.email,
-          reply_to: v.email ?? '',
+      // API Python du VPS (api/main.py), servie par Caddy sur /api
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           name: v.name ?? '',
           email: v.email ?? '',
-          phone: v.phone || 'Non renseigné',
-          service: v.service || 'Non précisé',
+          phone: v.phone ?? '',
+          service: v.service ?? '',
           message: v.message ?? '',
-          sent_at: new Date().toLocaleString('fr-FR', {
-            dateStyle: 'full',
-            timeStyle: 'short',
-            timeZone: 'Africa/Dakar',
-          }),
-        },
-        { publicKey: this.EMAILJS_PUBLIC_KEY },
-      );
+          website: v.website ?? '',
+        }),
+      });
+      if (!res.ok) throw res;
       this.status = {
         message: 'Merci ! Votre demande a bien été envoyée. Nous vous répondrons dans les plus brefs délais.',
         error: false,
@@ -203,27 +196,22 @@ export class ContactPage {
     }
   }
 
-  /** Remonte le message réel renvoyé par EmailJS plutôt qu'une erreur générique. */
+  /** Traduit la réponse de l'API en message compréhensible pour le visiteur. */
   private describeError(err: unknown): string {
-    const e = err as { status?: number; text?: string; message?: string };
-    const detail = e?.text || e?.message || '';
-    console.error('EmailJS error', e?.status, detail || err);
-
-    if (e?.status === 412 && /over quota|quota/i.test(detail)) {
-      return "L'envoi a échoué : la boîte mail de destination configurée dans EmailJS est saturée. Écrivez-nous directement en attendant.";
+    if (!(err instanceof Response)) {
+      console.error('Contact API unreachable', err);
+      return "Impossible de joindre le serveur. Vérifiez votre connexion ou contactez-nous directement.";
     }
-    if (e?.status === 412) {
-      return `L'envoi a échoué côté serveur de messagerie${detail ? ' : ' + detail : ''}.`;
+    console.error('Contact API error', err.status);
+    if (err.status === 422) {
+      return 'Certains champs sont invalides : vérifiez votre adresse email et votre message.';
     }
-    if (e?.status === 400 || e?.status === 404) {
-      return "L'envoi a échoué : la configuration du formulaire est invalide (service ou template EmailJS introuvable).";
+    if (err.status === 413) {
+      return 'Votre message est trop long. Raccourcissez-le puis réessayez.';
     }
-    if (e?.status === 403) {
-      return "L'envoi a échoué : ce domaine n'est pas autorisé dans les réglages EmailJS.";
+    if (err.status === 429) {
+      return 'Trop de demandes envoyées en peu de temps. Merci de réessayer dans une heure.';
     }
-    if (e?.status === 429) {
-      return 'Trop de demandes envoyées en peu de temps. Merci de réessayer dans quelques minutes.';
-    }
-    return `Erreur lors de l'envoi${detail ? ' : ' + detail : ''}. Réessayez ou contactez-nous par téléphone.`;
+    return "L'envoi a échoué côté serveur. Réessayez dans quelques minutes ou contactez-nous par téléphone.";
   }
 }

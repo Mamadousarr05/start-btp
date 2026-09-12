@@ -22,6 +22,13 @@ services:
     image: ${IMAGE:?IMAGE non défini}
     restart: unless-stopped
 
+  # API Python d'envoi des mails du formulaire de contact (/api/*)
+  api:
+    image: ${API_IMAGE:?API_IMAGE non défini}
+    restart: unless-stopped
+    # Généré par le workflow à partir des secrets GitHub (voir api/.env.example)
+    env_file: ./api.env
+
 volumes:
   # Certificats SSL : doivent survivre aux redéploiements
   caddy_data:

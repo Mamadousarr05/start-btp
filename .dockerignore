@@ -4,7 +4,8 @@ dist
 .git
 .github
 deploy
-emailjs
+api
+proxy.conf.json
 .vscode
 Dockerfile
 .dockerignore

@@ -1,0 +1,25 @@
+NOUVELLE DEMANDE DE DEVIS — STAR-BTP
+====================================
+
+Reçue le {{ sent_at }} depuis le formulaire de contact de star-btp.com.
+
+Service souhaité : {{ service or "Non précisé" }}
+
+COORDONNÉES DU CLIENT
+- Nom       : {{ name }}
+- Email     : {{ email }}
+- Téléphone : {{ phone or "Non renseigné" }}
+{% if whatsapp %}
+- WhatsApp  : https://wa.me/{{ whatsapp }}
+{% endif %}
+
+MESSAGE
+-------
+{{ message }}
+
+--
+Répondez directement à ce mail : la réponse partira vers le client.
+
+STAR-BTP · La qualité au meilleur prix
+Cité ASECNA, Immeuble en face Clinique NABY, 1er Étage — Rufisque, Dakar
++221 77 228 96 69 · +221 77 409 67 17 · https://star-btp.com
