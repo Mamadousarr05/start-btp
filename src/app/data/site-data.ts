@@ -237,22 +237,117 @@ export const TESTIMONIALS = [
   },
 ];
 
+/**
+ * Organisme auprès duquel STAR-BTP est agréée ou référencée comme prestataire.
+ * Source : courriers d'agrément officiels (dossier « agréments »).
+ */
 export interface Partner {
-  /** Nom affiché, et texte de repli quand aucun logo n'est disponible. */
+  /** Nom de l'organisme. */
   name: string;
-  /** Logo officiel dans public/img/partners/. Omettre pour afficher le nom en toutes lettres. */
+  /** Tutelle ou précision institutionnelle. */
+  entity: string;
+  /** Année du courrier d'agrément. */
+  year: string;
+  /** Famille d'organisme, sert de filtre d'affichage. */
+  category: 'Défense & sécurité' | 'État & agences' | 'Sociétés nationales' | 'Collectivités';
+  /** Logo officiel dans public/img/partners/. Omettre pour un affichage en toutes lettres. */
   logo?: string;
 }
 
 export const PARTNERS: Partner[] = [
-  { name: 'Ceratech Construction', logo: 'img/partners/ceratech.svg' },
-  { name: 'DANGOTE Cement', logo: 'img/partners/dangote.png' },
-  { name: 'ASECNA', logo: 'img/partners/asecna.png' },
-  { name: 'SENICO', logo: 'img/partners/senico.png' },
-  { name: 'CFPT Sénégal/Japon', logo: 'img/partners/cfpt.png' },
-  { name: 'APIX', logo: 'img/partners/apix.svg' },
-  { name: 'ATRA SA' },
+  {
+    name: 'Gendarmerie Nationale',
+    entity: 'Ministère des Forces Armées',
+    year: '2025',
+    category: 'Défense & sécurité',
+    logo: 'img/partners/gendarmerie.png',
+  },
+  {
+    name: 'Génie et Infrastructure des Armées',
+    entity: 'État-Major Général des Armées',
+    year: '2023',
+    category: 'Défense & sécurité',
+  },
+  {
+    name: 'ALFA',
+    entity: 'Agence pour le Logement des Forces Armées',
+    year: '2025',
+    category: 'Défense & sécurité',
+  },
+  {
+    name: 'AGETIP',
+    entity: "Agence d'Exécution des Travaux d'Intérêt Public",
+    year: '2025',
+    category: 'État & agences',
+    logo: 'img/partners/agetip.webp',
+  },
+  {
+    name: 'Building Administratif',
+    entity: 'Primature — Secrétariat Général du Gouvernement',
+    year: '2025',
+    category: 'État & agences',
+    logo: 'img/partners/secgouv.jpg',
+  },
+  {
+    name: 'Administration pénitentiaire',
+    entity: 'Ministère de la Justice',
+    year: '2025',
+    category: 'État & agences',
+  },
+  {
+    name: 'PUDC',
+    entity: "Programme d'Urgence de Développement Communautaire",
+    year: '2025',
+    category: 'État & agences',
+    logo: 'img/partners/pudc.jpg',
+  },
+  {
+    name: 'SN HLM',
+    entity: 'Société Nationale des Habitations à Loyer Modéré',
+    year: '2025',
+    category: 'Sociétés nationales',
+    logo: 'img/partners/snhlm.svg',
+  },
+  {
+    name: 'SICAP SA',
+    entity: "Leader de l'immobilier au Sénégal",
+    year: '2023',
+    category: 'Sociétés nationales',
+    logo: 'img/partners/sicap.jpg',
+  },
+  {
+    name: 'IPRES',
+    entity: 'Institution de Prévoyance Retraite du Sénégal',
+    year: '2023',
+    category: 'Sociétés nationales',
+    logo: 'img/partners/ipres.jpg',
+  },
+  {
+    name: 'Commune de Diamniadio',
+    entity: 'Département de Rufisque',
+    year: '2025',
+    category: 'Collectivités',
+  },
+  {
+    name: 'Commune de Tivaouane',
+    entity: 'Région de Thiès',
+    year: '2023',
+    category: 'Collectivités',
+  },
+  {
+    name: 'Commune de Keur Massar Nord',
+    entity: 'Département de Keur Massar',
+    year: '2023',
+    category: 'Collectivités',
+  },
 ];
+
+export const PARTNER_CATEGORIES = [
+  'Défense & sécurité',
+  'État & agences',
+  'Sociétés nationales',
+  'Collectivités',
+] as const;
 
 export const JOBS = [
   {

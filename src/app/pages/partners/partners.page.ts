@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CtaBandComponent } from '../../components/cta-band/cta-band.component';
-import { PARTNERS, TESTIMONIALS } from '../../data/site-data';
+import { PARTNER_CATEGORIES, PARTNERS, TESTIMONIALS } from '../../data/site-data';
 
 @Component({
   selector: 'app-partners-page',
@@ -13,34 +13,49 @@ import { PARTNERS, TESTIMONIALS } from '../../data/site-data';
         <nav class="breadcrumb" aria-label="Fil d'Ariane">
           <a routerLink="/">Accueil</a> <span>/</span> <span>Partenaires</span>
         </nav>
-        <span class="badge-pill badge-pill--light">Ils nous font confiance</span>
-        <h1>Nos partenaires</h1>
+        <span class="badge-pill badge-pill--light">Entreprise agréée</span>
+        <h1>Agréments et références</h1>
         <p>
-          La confiance de nos clients et partenaires est notre plus grande récompense. Ensemble,
-          nous construisons des ouvrages durables au Sénégal.
+          STAR-BTP est agréée ou référencée comme prestataire auprès d'institutions publiques, de
+          sociétés nationales et de collectivités territoriales du Sénégal, en bâtiment comme en VRD.
         </p>
       </div>
     </section>
 
-    <!-- LOGOS -->
+    <!-- AGRÉMENTS -->
     <section class="section-padding">
       <div class="container-section">
         <div class="section-head">
-          <span class="badge-pill">Références</span>
-          <h2>Clients et partenaires</h2>
-          <p>Entreprises, institutions et collectivités qui nous ont confié leurs projets.</p>
+          <span class="badge-pill">Nos agréments</span>
+          <h2>Habilités à soumissionner à leurs marchés</h2>
+          <p>
+            Chaque agrément inscrit STAR-BTP au registre des prestataires de l'organisme et lui
+            ouvre l'accès à ses appels d'offres.
+          </p>
         </div>
-        <div class="logo-grid">
-          @for (p of partners; track p.name) {
-            @if (p.logo) {
-              <div class="logo-tile logo-tile--img" [style.background-image]="'url(' + p.logo + ')'" [title]="p.name">
-                <span class="sr-only">{{ p.name }}</span>
-              </div>
-            } @else {
-              <div class="logo-tile">{{ p.name }}</div>
-            }
-          }
-        </div>
+
+        @for (group of groups; track group.category) {
+          <div class="agrement-group">
+            <h3 class="agrement-group__title">
+              {{ group.category }}
+              <span>{{ group.items.length }}</span>
+            </h3>
+            <div class="grid grid-4">
+              @for (p of group.items; track p.name) {
+                <article class="card card-hover agrement-card">
+                  @if (p.logo) {
+                    <img class="agrement-card__logo" [src]="p.logo" [alt]="p.name" loading="lazy" />
+                  } @else {
+                    <span class="agrement-card__mark" aria-hidden="true">{{ p.name.charAt(0) }}</span>
+                  }
+                  <h4>{{ p.name }}</h4>
+                  <p>{{ p.entity }}</p>
+                  <span class="badge-pill badge-pill--accent agrement-card__year">Agréé {{ p.year }}</span>
+                </article>
+              }
+            </div>
+          </div>
+        }
       </div>
     </section>
 
@@ -125,6 +140,12 @@ import { PARTNERS, TESTIMONIALS } from '../../data/site-data';
 export class PartnersPage {
   partners = PARTNERS;
   testimonials = TESTIMONIALS;
+
+  /** Agréments regroupés par famille d'organisme, dans l'ordre de PARTNER_CATEGORIES. */
+  groups = PARTNER_CATEGORIES.map(category => ({
+    category,
+    items: PARTNERS.filter(p => p.category === category),
+  })).filter(g => g.items.length > 0);
 
   types = [
     {

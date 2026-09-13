@@ -504,20 +504,75 @@ p { color: hsl(var(--muted-foreground)); }
 }
 .logo-tile:hover { color: hsl(var(--primary)); border-color: hsl(var(--primary) / .4); box-shadow: var(--shadow-sm); transform: translateY(-3px); }
 
-/* Cadre portant le logo officiel en arrière-plan : contenu dans le cadre, jamais déformé. */
-.logo-tile--img {
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  /* La zone peinte est réduite par le padding, ce qui aère le logo dans son cadre. */
-  background-origin: content-box;
+/* Logo officiel dans son cadre : contenu, jamais déformé, discret au repos. */
+.logo-tile__img {
+  max-height: 3.5rem;
+  width: auto;
+  object-fit: contain;
   filter: grayscale(1);
   opacity: .72;
+  transition: var(--transition-smooth);
 }
-.logo-tile--img:hover { filter: none; opacity: 1; }
+.logo-tile:hover .logo-tile__img { filter: none; opacity: 1; }
+
+/* ---------- Agréments ---------- */
+.agrement-group + .agrement-group { margin-top: 3rem; }
+.agrement-group__title {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 1.25rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.agrement-group__title span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding-inline: .4rem;
+  border-radius: 9999px;
+  background: hsl(var(--primary) / .1);
+  color: hsl(var(--primary));
+  font-size: .75rem;
+  letter-spacing: 0;
+}
+
+.agrement-card { display: flex; flex-direction: column; align-items: flex-start; }
+.agrement-card h4 { font-size: 1rem; margin-top: .25rem; }
+.agrement-card p { font-size: .85rem; margin-top: .35rem; }
+.agrement-card__logo {
+  height: 2.75rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left center;
+  margin-bottom: .9rem;
+}
+.agrement-card__mark {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: calc(var(--radius) - .25rem);
+  background: hsl(var(--primary) / .08);
+  color: hsl(var(--primary));
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin-bottom: .9rem;
+  transition: var(--transition-smooth);
+}
+.card-hover:hover .agrement-card__mark { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+.agrement-card__year { margin: auto 0 0; padding-top: 0; align-self: flex-start; }
+.agrement-card .agrement-card__year { margin-top: 1rem; margin-bottom: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .logo-tile, .logo-tile--img { transition: none; }
+  .logo-tile, .logo-tile__img { transition: none; }
   .logo-tile:hover { transform: none; }
 }
 

@@ -179,22 +179,26 @@ import { PARTNERS, PROJECTS, SERVICES, STATS, TESTIMONIALS } from '../../data/si
     <section class="section-padding bg-section">
       <div class="container-section">
         <div class="section-head">
-          <span class="badge-pill">Nos partenaires</span>
-          <h2>Ils nous font confiance pour leurs projets</h2>
+          <span class="badge-pill">Nos agréments</span>
+          <h2>Entreprise agréée auprès des institutions sénégalaises</h2>
+          <p>
+            STAR-BTP est habilitée à soumissionner aux marchés de ces organismes publics,
+            sociétés nationales et collectivités.
+          </p>
         </div>
         <div class="logo-grid">
           @for (p of partners; track p.name) {
-            @if (p.logo) {
-              <div class="logo-tile logo-tile--img" [style.background-image]="'url(' + p.logo + ')'" [title]="p.name">
-                <span class="sr-only">{{ p.name }}</span>
-              </div>
-            } @else {
-              <div class="logo-tile">{{ p.name }}</div>
-            }
+            <div class="logo-tile" [title]="p.entity">
+              @if (p.logo) {
+                <img class="logo-tile__img" [src]="p.logo" [alt]="p.name" loading="lazy" />
+              } @else {
+                {{ p.name }}
+              }
+            </div>
           }
         </div>
         <div class="center mt-2">
-          <a routerLink="/partenaires" class="btn btn-outline">Tous nos partenaires</a>
+          <a routerLink="/partenaires" class="btn btn-outline">Tous nos agréments</a>
         </div>
       </div>
     </section>

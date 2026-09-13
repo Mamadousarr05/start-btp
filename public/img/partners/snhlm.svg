@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+    <!-- Fond -->
+    <rect width="64" height="64" fill="#ffffff" rx="8"/>
+    
+    <!-- Toits dorés -->
+    <path d="M8 28 L20 16 L32 28 L44 16 L56 28 L48 28 L44 24 L40 28 L32 20 L24 28 L20 24 L16 28 Z" fill="#C8A960"/>
+    
+    <!-- Maison principale -->
+    <rect x="24" y="28" width="16" height="20" fill="#1B365D"/>
+    
+    <!-- Fenêtres -->
+    <rect x="26" y="30" width="3" height="3" fill="#C8A960"/>
+    <rect x="30" y="30" width="3" height="3" fill="#C8A960"/>
+    <rect x="34" y="30" width="3" height="3" fill="#C8A960"/>
+    
+    <!-- Texte SNHLM -->
+    <text x="32" y="44" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1B365D">SN</text>
+    <text x="32" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="6.4" fill="#C8A960">HLM</text>
+</svg>
